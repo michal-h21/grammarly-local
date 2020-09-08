@@ -75,6 +75,14 @@ local function load_file(filename)
   return text
 end
 
+local function save_file(filename, text)
+  local f = io.open(filename, "w")
+  if not f then return nil, "cannot write file" end
+  f:write(text)
+  f:close()
+  return true
+end
+
 local grammarly_lua = {
     _VERSION = '0.1.0-1',
 }
@@ -109,8 +117,18 @@ server:start(function(request, response)
   local path = request:path()
   if path == "/send" then
     local data = request:post()
-    print("text", decodeURI(data.text))
-    print "-----------"
+    if data and data.text then
+      text = decodeURI(data.text)
+      print "------------------------"
+      print "Saving text:"
+      print( text)
+      local status, err = save_file(filename, text)
+      if not status then
+        print(err, filename)
+      end
+    else
+      print("Error: no text data send")
+    end
     response:write(string.format(redirect_template, "http://localhost:" ..  port .."/"))
   elseif path == "/end" then
     response:write("Bye")
